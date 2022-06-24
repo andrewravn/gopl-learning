@@ -34,9 +34,10 @@ func dup1() {
 // 2	as
 func dup2() {
 	counts := make(map[string]int)
+	fileTracker := make(map[string]string)
 	files := os.Args[1:]
 	if len(files) == 0 {
-		countLines(os.Stdin, counts)
+		countLines(os.Stdin, "", counts, fileTracker)
 	} else {
 		for _, arg := range files {
 			f, err := os.Open(arg)
@@ -44,21 +45,28 @@ func dup2() {
 				fmt.Fprintf(os.Stderr, "dup2: %v\n", err)
 				continue
 			}
-			countLines(f, counts)
+			countLines(f, arg, counts, fileTracker)
 			f.Close()
 		}
 	}
-	for line, n := range counts {
-		if n > 1 {
-			fmt.Printf("%d\t%s\n", n, line)
+
+	for file, l := range fileTracker {
+		fmt.Println("Filename: ", file)
+		for line, n := range counts {
+			if strings.Contains(l, line) {
+				fmt.Printf("\t%s\t%d\n", line, n)
+			}
 		}
 	}
 }
 
-func countLines(f *os.File, counts map[string]int) {
+func countLines(f *os.File, fileName string, counts map[string]int, fileTracker map[string]string) {
 	input := bufio.NewScanner(f)
 	for input.Scan() {
 		counts[input.Text()]++
+		if !strings.Contains(fileTracker[fileName], input.Text()) {
+			fileTracker[fileName] = fileTracker[fileName] + input.Text() + ","
+		}
 	}
 }
 
@@ -84,5 +92,5 @@ func dup3() {
 func main() {
 	// dup1()
 	dup2()
-	dup3()
+	// dup3()
 }
